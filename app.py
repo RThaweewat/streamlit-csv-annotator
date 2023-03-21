@@ -6,7 +6,7 @@ uploaded_file = st.file_uploader("Upload CSV or Excel file", type=["csv", "xlsx"
 
 if uploaded_file is not None:
     # Load data into dataframe
-    df = pd.read_csv(uploaded_file) if uploaded_file.type == "text/csv" else pd.read_excel(uploaded_file)
+    df = pd.read_csv(uploaded_file) if uploaded_file.type == "text/csv" else pd.read_excel(uploaded_file, engine='openpyxl')
 
     # Filter out rows with filled "status" column
     df = df[df["status"].isnull()]
