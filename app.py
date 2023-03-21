@@ -12,6 +12,7 @@ if uploaded_file is not None:
     df = df[df["status"].isnull()]
 
     # Display current and total row counts
+    global current_row
     current_row = 0
     total_row = len(df)
     st.text(f"Row {current_row + 1} of {total_row}")
@@ -27,25 +28,25 @@ if uploaded_file is not None:
 
     # Define button functions
     def next_matched():
-        nonlocal current_row
+        global current_row
         df.iloc[current_row, df.columns.get_loc("status")] = "matched"
         current_row += 1
         st.text(f"Row {current_row + 1} of {total_row}")
 
     def next_not_match():
-        nonlocal current_row
+        global current_row
         df.iloc[current_row, df.columns.get_loc("status")] = "non_match"
         current_row += 1
         st.text(f"Row {current_row + 1} of {total_row}")
 
     def next_not_address():
-        nonlocal current_row
+        global current_row
         df.iloc[current_row, df.columns.get_loc("status")] = "non_address"
         current_row += 1
         st.text(f"Row {current_row + 1} of {total_row}")
 
     def back():
-        nonlocal current_row
+        global current_row
         current_row = max(current_row - 1, 0)
         st.text(f"Row {current_row + 1} of {total_row}")
 
