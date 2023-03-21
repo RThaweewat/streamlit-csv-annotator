@@ -22,7 +22,9 @@ def main():
     df, df_unfilled = process_file(uploaded_file)
 
     if df is not None:
-        index = st.session_state.get("index", 0)
+        if "index" not in st.session_state:
+            st.session_state.index = 0
+        index = st.session_state.index
         filled_count = len(df) - len(df_unfilled)
 
         if index < len(df_unfilled):
@@ -33,14 +35,18 @@ def main():
             if st.button("Next (Matched)"):
                 df.at[row.name, "status"] = "matched"
                 index += 1
+                st.session_state.index = index
             if st.button("Next (Not match)"):
                 df.at[row.name, "status"] = "non_match"
                 index += 1
+                st.session_state.index = index
             if st.button("Next (Not address)"):
                 df.at[row.name, "status"] = "non_address"
                 index += 1
+                st.session_state.index = index
             if st.button("Back") and index > 0:
                 index -= 1
+                st.session_state.index = index
 
             unfilled_count = len(df) - filled_count - (index + 1)
             st.write(f"{filled_count} rows filled, {unfilled_count} rows remaining")
