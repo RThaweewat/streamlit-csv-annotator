@@ -6,7 +6,7 @@ uploaded_file = st.file_uploader("Upload CSV or Excel file", type=["csv", "xlsx"
 
 if uploaded_file is not None:
     # Load data into dataframe
-    df = pd.read_csv(uploaded_file) if uploaded_file.type == "text/csv" else pd.read_excel(uploaded_file, engine='openpyxl')
+    df = pd.read_csv(uploaded_file)
 
     # Filter out rows with filled "status" column
     df = df[df["status"].isnull()]
@@ -18,8 +18,8 @@ if uploaded_file is not None:
     st.text(f"Row {current_row + 1} of {total_row}")
 
     # Display current address_1 and address_2
-    address_1 = df.iloc[current_row]["address_1"]
-    address_2 = df.iloc[current_row]["address_2"]
+    address_1 = df.iloc[current_row]["HOUSE_FULL_1"]
+    address_2 = df.iloc[current_row]["HOUSE_FULL_2"]
     st.write(f"Address 1: {address_1}")
     st.write(f"Address 2: {address_2}")
 
