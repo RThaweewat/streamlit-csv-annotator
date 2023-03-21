@@ -5,10 +5,14 @@ def process_file(file, df):
     if file is None:
         return None, None
 
-    if file.name.endswith(".csv"):
-        df = pd.read_csv(file)
-    elif file.name.endswith(".xlsx"):
-        df = pd.read_excel(file)
+    try:
+        if file.name.endswith(".csv"):
+            df = pd.read_csv(file)
+        elif file.name.endswith(".xlsx"):
+            df = pd.read_excel(file)
+    except pd.errors.EmptyDataError:
+        st.error("The uploaded file is empty or improperly formatted. Please upload a valid CSV or Excel file.")
+        return None, None
 
     if "status" not in df.columns:
         df["status"] = ""
@@ -16,6 +20,7 @@ def process_file(file, df):
     df_unfilled = df[df["status"] == ""]
 
     return df, df_unfilled
+
 
 def main():
     st.title("Address Annotation App")
