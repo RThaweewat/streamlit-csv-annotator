@@ -1,70 +1,61 @@
-import pandas as pd
 import streamlit as st
+import pandas as pd
 
-# Upload file
-uploaded_file = st.file_uploader("Upload CSV or Excel file", type=["csv", "xlsx"])
+def process_file(file):
+    if file is None:
+        return None, None
 
-if uploaded_file is not None:
-    # Load data into dataframe
-    df = pd.read_csv(uploaded_file)
+    if file.name.endswith(".csv"):
+        df = pd.read_csv(file)
+    elif file.name.endswith(".xlsx"):
+        df = pd.read_excel(file)
 
-    # Filter out rows with filled "status" column
-    df = df[df["status"].isnull()]
+    if "status" not in df.columns:
+        df["status"] = ""
 
-    # Display current and total row counts
-    global current_row
-    current_row = 0
-    total_row = len(df)
-    st.text(f"Row {current_row + 1} of {total_row}")
+    return df, df[df["status"] == ""]
 
-    # Display current address_1 and address_2
-    address_1 = df.iloc[current_row]["HOUSE_FULL_1"]
-    address_2 = df.iloc[current_row]["HOUSE_FULL_2"]
-    st.write(f"Address 1: {address_1}")
-    st.write(f"Address 2: {address_2}")
+def main():
+    st.title("Address Annotation App")
 
-    # Add status column with default value of None
-    df["status"] = None
+    uploaded_file = st.file_uploader("Upload a CSV or Excel file", type=["csv", "xlsx"])
+    df, df_unfilled = process_file(uploaded_file)
 
-    # Define button functions
-    def next_matched():
-        global current_row
-        df.iloc[current_row, df.columns.get_loc("status")] = "matched"
-        current_row += 1
-        st.text(f"Row {current_row + 1} of {total_row}")
+    if df is not None:
+        index = st.session_state.get("index", 0)
+        filled_count = len(df) - len(df_unfilled)
 
-    def next_not_match():
-        global current_row
-        df.iloc[current_row, df.columns.get_loc("status")] = "non_match"
-        current_row += 1
-        st.text(f"Row {current_row + 1} of {total_row}")
+        if index < len(df_unfilled):
+            row = df_unfilled.iloc[index]
+            st.write(f"Row {index + 1} of {len(df_unfilled)}")
+            st.write(pd.DataFrame(row[["HOUSE_FULL_1", "HOUSE_FULL_2"]]).T)
 
-    def next_not_address():
-        global current_row
-        df.iloc[current_row, df.columns.get_loc("status")] = "non_address"
-        current_row += 1
-        st.text(f"Row {current_row + 1} of {total_row}")
+            if st.button("Next (Matched)"):
+                df.at[row.name, "status"] = "matched"
+                index += 1
+            if st.button("Next (Not match)"):
+                df.at[row.name, "status"] = "non_match"
+                index += 1
+            if st.button("Next (Not address)"):
+                df.at[row.name, "status"] = "non_address"
+                index += 1
+            if st.button("Back") and index > 0:
+                index -= 1
 
-    def back():
-        global current_row
-        current_row = max(current_row - 1, 0)
-        st.text(f"Row {current_row + 1} of {total_row}")
+            unfilled_count = len(df) - filled_count - (index + 1)
+            st.write(f"{filled_count} rows filled, {unfilled_count} rows remaining")
 
-    # Add buttons
-    col1, col2, col3, col4 = st.beta_columns(4)
-    col1.button("Next (Matched)", on_click=next_matched)
-    col2.button("Next (Not match)", on_click=next_not_match)
-    col3.button("Next (Not address)", on_click=next_not_address)
-    col4.button("Back", on_click=back)
+        else:
+            st.write("All rows annotated!")
+            st.write(f"{filled_count} rows filled")
 
-    # Display number of filled and unfilled rows
-    filled_count = len(df[df["status"].notnull()])
-    unfilled_count = total_row - filled_count
-    st.text(f"{filled_count} rows filled, {unfilled_count} rows left")
+        st.write(df)
+        st.download_button(
+            label="Download annotated file",
+            data=df.to_csv(index=False),
+            file_name="annotated_file.csv",
+            mime="text/csv"
+        )
 
-    # Display download button
-    if filled_count > 0:
-        csv = df.to_csv(index=False)
-        b64 = base64.b64encode(csv.encode()).decode()
-        href = f'<a href="data:file/csv;base64,{b64}" download="annotated_data.csv">Download annotated data</a>'
-        st.markdown(href, unsafe_allow_html=True)
+if __name__ == "__main__":
+    main()
